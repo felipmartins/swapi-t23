@@ -2,9 +2,8 @@ from typing import Optional, List
 from sqlmodel import SQLModel, Field, Relationship
 
 
-class Planet(SQLModel, table=True):
+class PlanetBase(SQLModel):
 
-    id: Optional[int] = Field(default=None, primary_key=True)
     name: str = Field(max_length=100)
     rotation_period: str = Field(max_length=40)
     orbital_period: str = Field(max_length=40)
@@ -15,7 +14,19 @@ class Planet(SQLModel, table=True):
     surface_water: str = Field(max_length=40)
     population: str = Field(max_length=40)
 
+
+class Planet(PlanetBase, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
     residents: List["People"] = Relationship(back_populates="homeworld")
+
+
+class PlanetCreate(PlanetBase):
+    pass
+
+
+class PlanetRead(PlanetBase):
+    id: int
+    residents: List["People"] = []
 
 
 class People(SQLModel, table=True):
@@ -32,3 +43,6 @@ class People(SQLModel, table=True):
 
     planet_id: int = Field(default=None, foreign_key="planet.id")
     homeworld: Planet = Relationship(back_populates="residents")
+
+
+PlanetRead.update_forward_refs()

@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from sqlmodel import Session, select
-from swapi.model import Planet, People
+from swapi.model import Planet, People, PlanetRead, PlanetCreate
 from swapi.db import create_db_and_tables, engine
 from swapi.db_populate import populate_empty_tables
 from fastapi.middleware.cors import CORSMiddleware
@@ -60,16 +60,18 @@ async def list_planets():
 
 
 @app.post("/api/planets/", tags=["planets"], status_code=201)
-async def create_planet(planet: Planet):
+async def create_planet(planet: PlanetCreate):
    with get_session() as session:
-      session.add(planet)
+      db_planet = Planet.from_orm(planet)
+      session.add(db_planet)
       session.commit()
-      session.refresh(planet)
-      return planet
+      session.refresh(db_planet)
+      return db_planet
    
 
-@app.get(f"/api/planets/{id}", tags=["planets"])
+@app.get("/api/planets/{id}", tags=["planets"], response_model=PlanetRead)
 async def get_planet_by_id(id: int):
    with get_session() as session:
       result = session.exec(select(Planet).where(Planet.id  == id)).one()
+      result.residents #due to lazy loading
       return result
